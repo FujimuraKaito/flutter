@@ -17,6 +17,7 @@ dependencies:
 
   cupertino_icons: ^1.0.0
   provider: ^4.3.3
+  # firebaseのバージョン管理はドキュメントを見る
   firebase_core: ^0.5.3
   firebase_analytics: ^5.0.2
   firebase_auth: ^0.18.4+1
