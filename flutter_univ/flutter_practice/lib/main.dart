@@ -29,11 +29,93 @@ class MyHomePage extends StatefulWidget {
   }
 }
 
+// ドキュメントにあった「子供の名前を決める」
+// class _MyHomePageState extends State<MyHomePage> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text('Baby Name Votes')),
+//       body: _buildBody(context),
+//     );
+//   }
+
+//   Widget _buildBody(BuildContext context) {
+//     return StreamBuilder<QuerySnapshot>(
+//       // これでfirebaseの値をほぼ同期的に読み込む
+//       stream: FirebaseFirestore.instance.collection('baby').snapshots(),
+//       builder: (context, snapshot) {
+//         if (!snapshot.hasData) return LinearProgressIndicator();
+
+//         return _buildList(context, snapshot.data.docs);
+//       },
+//     );
+//   }
+
+//   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
+//     return ListView(
+//       padding: const EdgeInsets.only(top: 20.0),
+//       children: snapshot.map((data) => _buildListItem(context, data)).toList(),
+//     );
+//   }
+
+//   // 具体的に表示を作成するところ
+//   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
+//     final record = Record.fromSnapshot(data);
+
+//     return Padding(
+//       key: ValueKey(record.name),
+//       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+//       child: Container(
+//           decoration: BoxDecoration(
+//             border: Border.all(color: Colors.grey),
+//             borderRadius: BorderRadius.circular(5.0),
+//           ),
+//           child: ListTile(
+//             title: Text(record.name),
+//             trailing: Text(record.votes.toString()),
+//             // onTap: () => record.reference.update({'votes': record.votes + 1})),
+//             //
+//             // もし同時に二人の人が同じところに投票しても良いようにする
+//             // transactionという方法もある
+//             // https://codelabs.developers.google.com/codelabs/flutter-firebase/index.html?hl=ja#10
+//             onTap: () =>
+//                 record.reference.update({'votes': FieldValue.increment(1)}),
+//           )),
+//     );
+//   }
+// }
+
 class _MyHomePageState extends State<MyHomePage> {
+  TextEditingController _nameController;
+  TextEditingController _ageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _ageController = TextEditingController();
+  }
+
+  // _MyHomePageState({this.firestore});
+
+  CollectionReference get users =>
+      FirebaseFirestore.instance.collection('user');
+  Future<void> _addAccount() async {
+    if (_nameController.text.isEmpty || _ageController.text.isEmpty) {
+      throw ('Insert both your name and age');
+    } else {
+      await users.add({
+        'name': _nameController.text.toString(),
+        'age': _ageController.text.toString(),
+        'created_at': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Baby Name Votes')),
+      appBar: AppBar(title: Text('Add name & age')),
       body: _buildBody(context),
     );
   }
@@ -41,7 +123,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       // これでfirebaseの値をほぼ同期的に読み込む
-      stream: FirebaseFirestore.instance.collection('baby').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('user')
+          .orderBy('created_at')
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
 
@@ -51,9 +136,81 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-    return ListView(
-      padding: const EdgeInsets.only(top: 20.0),
-      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
+    return Column(
+      children: [
+        // formの部分
+        TextField(
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'name',
+          ),
+          controller: _nameController,
+        ),
+        TextField(
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'age',
+          ),
+          controller: _ageController,
+        ),
+        RaisedButton(
+          child: Text('Add a user'),
+          onPressed: () async {
+            try {
+              await _addAccount(); // アカウントを登録する関数
+              _nameController.text = '';
+              _ageController.text = '';
+              showDialog<void>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Done'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('OK'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            } catch (err) {
+              showDialog<void>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(err.toString()),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('OK'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
+          },
+        ),
+        SizedBox(
+          height: 600, // 絶対いる
+          child: Container(
+            child: ListView(
+              itemExtent: 100,
+              padding: const EdgeInsets.only(top: 20.0),
+              children: snapshot
+                  .map(
+                    (data) => _buildListItem(context, data),
+                  )
+                  .toList(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -64,22 +221,20 @@ class _MyHomePageState extends State<MyHomePage> {
     return Padding(
       key: ValueKey(record.name),
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(5.0),
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+            child: ListTile(
+              title: Text(record.name),
+              trailing: Text(record.age),
+            ),
           ),
-          child: ListTile(
-            title: Text(record.name),
-            trailing: Text(record.votes.toString()),
-            // onTap: () => record.reference.update({'votes': record.votes + 1})),
-            //
-            // もし同時に二人の人が同じところに投票しても良いようにする
-            // transactionという方法もある
-            // https://codelabs.developers.google.com/codelabs/flutter-firebase/index.html?hl=ja#10
-            onTap: () =>
-                record.reference.update({'votes': FieldValue.increment(1)}),
-          )),
+        ],
+      ),
     );
   }
 }
@@ -88,20 +243,20 @@ class _MyHomePageState extends State<MyHomePage> {
 // 必要になるときは少ないかも
 class Record {
   final String name;
-  final int votes;
+  final String age;
   final DocumentReference reference;
 
   Record.fromMap(Map<String, dynamic> map, {this.reference})
       : assert(map['name'] != null),
-        assert(map['votes'] != null),
+        assert(map['age'] != null),
         name = map['name'],
-        votes = map['votes'];
+        age = map['age'];
 
   Record.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data(), reference: snapshot.reference);
 
   @override
-  String toString() => "Record<$name:$votes>";
+  String toString() => "Record<$name:$age>";
 }
 
 // ここから下は最初のドキュメントにあった方
