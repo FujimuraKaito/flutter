@@ -40,6 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
+      // これでfirebaseの値をほぼ同期的に読み込む
       stream: FirebaseFirestore.instance.collection('baby').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
@@ -64,16 +65,21 @@ class _MyHomePageState extends State<MyHomePage> {
       key: ValueKey(record.name),
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(5.0),
-        ),
-        child: ListTile(
-          title: Text(record.name),
-          trailing: Text(record.votes.toString()),
-          onTap: () => print(record.name),
-        ),
-      ),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+          child: ListTile(
+            title: Text(record.name),
+            trailing: Text(record.votes.toString()),
+            // onTap: () => record.reference.update({'votes': record.votes + 1})),
+            //
+            // もし同時に二人の人が同じところに投票しても良いようにする
+            // transactionという方法もある
+            // https://codelabs.developers.google.com/codelabs/flutter-firebase/index.html?hl=ja#10
+            onTap: () =>
+                record.reference.update({'votes': FieldValue.increment(1)}),
+          )),
     );
   }
 }
