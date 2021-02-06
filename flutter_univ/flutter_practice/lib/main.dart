@@ -3,10 +3,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_practice/edit_page.dart';
+// import 'package:flutter_practice/tabs_page.dart';
 
 // main関数を以下のように変更したらできた
 // void main() => runApp(MyApp());
 Future<void> main() async {
+  // runAppを呼び出す前にFlutter Engineの機能を利用したい場合にコール
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(MyApp());
@@ -16,76 +19,25 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Baby Names',
+      title: 'User List',
       home: MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  final String title = 'Add name & age';
   @override
-  _MyHomePageState createState() {
-    return _MyHomePageState();
-  }
+  // _はパッケージのスコープを限定する
+  // createStateメソッドでStateを返す(状態を管理する)
+  // インスタンス化する
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
-// ドキュメントにあった「子供の名前を決める」
-// class _MyHomePageState extends State<MyHomePage> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text('Baby Name Votes')),
-//       body: _buildBody(context),
-//     );
-//   }
-
-//   Widget _buildBody(BuildContext context) {
-//     return StreamBuilder<QuerySnapshot>(
-//       // これでfirebaseの値をほぼ同期的に読み込む
-//       stream: FirebaseFirestore.instance.collection('baby').snapshots(),
-//       builder: (context, snapshot) {
-//         if (!snapshot.hasData) return LinearProgressIndicator();
-
-//         return _buildList(context, snapshot.data.docs);
-//       },
-//     );
-//   }
-
-//   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-//     return ListView(
-//       padding: const EdgeInsets.only(top: 20.0),
-//       children: snapshot.map((data) => _buildListItem(context, data)).toList(),
-//     );
-//   }
-
-//   // 具体的に表示を作成するところ
-//   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
-//     final record = Record.fromSnapshot(data);
-
-//     return Padding(
-//       key: ValueKey(record.name),
-//       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-//       child: Container(
-//           decoration: BoxDecoration(
-//             border: Border.all(color: Colors.grey),
-//             borderRadius: BorderRadius.circular(5.0),
-//           ),
-//           child: ListTile(
-//             title: Text(record.name),
-//             trailing: Text(record.votes.toString()),
-//             // onTap: () => record.reference.update({'votes': record.votes + 1})),
-//             //
-//             // もし同時に二人の人が同じところに投票しても良いようにする
-//             // transactionという方法もある
-//             // https://codelabs.developers.google.com/codelabs/flutter-firebase/index.html?hl=ja#10
-//             onTap: () =>
-//                 record.reference.update({'votes': FieldValue.increment(1)}),
-//           )),
-//     );
-//   }
-// }
-
+// Stateを参照することでWidgetの再作成を効率的に行う
+// State<T>は型を指定することで親クラス(MyHomePage)で定義された変数を使用できる
 class _MyHomePageState extends State<MyHomePage> {
+  // この中で状態の保持と更新を行える
   TextEditingController _nameController;
   TextEditingController _ageController;
 
@@ -100,11 +52,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   CollectionReference get users =>
       FirebaseFirestore.instance.collection('user');
+
+  // firebaseに追加する関数
   Future<void> _addAccount() async {
     if (_nameController.text.isEmpty || _ageController.text.isEmpty) {
       throw ('Insert both your name and age');
     } else {
-      await users.add({
+      final DocumentReference id = await users.add({
         'name': _nameController.text.toString(),
         'age': _ageController.text.toString(),
         'created_at': FieldValue.serverTimestamp(),
@@ -112,17 +66,36 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // もちろんここはオーバーライド
   @override
   Widget build(BuildContext context) {
+    // Stateクラスを継承したクラスはbuildメソッドでWidgetツリーを返す
     return Scaffold(
-      appBar: AppBar(title: Text('Add name & age')),
+      // 親クラス(MyHomePage)で定義した変数を参照するときはwidget.XXX
+      // MyHomePageの親クラスで定義された変数も参照することができる
+      appBar: AppBar(title: Text(widget.title)),
+      // 普通にこのbodyにWidgetツリーを構成することもできる
       body: _buildBody(context),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditPage(),
+              fullscreenDialog: true,
+            ),
+          );
+        },
+        tooltip: 'Add User',
+        child: Icon(Icons.add),
+      ),
     );
   }
 
+  // _buildBodyというWidgetを作る
   Widget _buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      // これでfirebaseの値をほぼ同期的に読み込む
+      // これでfirebaseの値をほぼ同期的に読み込む→公式ドキュメント情報
       stream: FirebaseFirestore.instance
           .collection('user')
           .orderBy('created_at')
@@ -135,6 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // DocumentSnapshotはおそらくfirebase独自の型？
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
     return Column(
       children: [
@@ -197,7 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         SizedBox(
-          height: 600, // 絶対いる
+          height: 600, // must
           child: Container(
             child: ListView(
               itemExtent: 100,
@@ -214,7 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // 具体的に表示を作成するところ
+  // create list view
   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
     final record = Record.fromSnapshot(data);
 
@@ -229,8 +203,23 @@ class _MyHomePageState extends State<MyHomePage> {
               borderRadius: BorderRadius.circular(5.0),
             ),
             child: ListTile(
+              leading: Text(record.age),
               title: Text(record.name),
-              trailing: Text(record.age),
+              trailing: IconButton(
+                icon: Icon(Icons.edit),
+                onPressed: () async {
+                  // TODO: Go to edit page
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditPage(
+                        record: record,
+                      ),
+                      fullscreenDialog: true,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -239,25 +228,91 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-// コードをきれいにする
-// 必要になるときは少ないかも
+// To clean code preference
 class Record {
   final String name;
   final String age;
+  final String id;
   final DocumentReference reference;
 
   Record.fromMap(Map<String, dynamic> map, {this.reference})
+      // assert内の処理がfalseの場合，警告が出る
+      // →この場合name,ageは必須パラメータ
       : assert(map['name'] != null),
         assert(map['age'] != null),
+        // assert(map['id'] != null),
         name = map['name'],
-        age = map['age'];
+        age = map['age'],
+        /**
+         * 重要 reference.idがVueでいうdoc.idとなる　
+         */
+        id = reference.id;
 
+  // method
+  // : means to help other method
   Record.fromSnapshot(DocumentSnapshot snapshot)
+      // referenceとしてsnapShot.referenceを渡している
       : this.fromMap(snapshot.data(), reference: snapshot.reference);
 
   @override
   String toString() => "Record<$name:$age>";
 }
+
+// ドキュメントにあった「子供の名前を決める」
+// class _MyHomePageState extends State<MyHomePage> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text('Baby Name Votes')),
+//       body: _buildBody(context),
+//     );
+//   }
+
+//   Widget _buildBody(BuildContext context) {
+//     return StreamBuilder<QuerySnapshot>(
+//       // これでfirebaseの値をほぼ同期的に読み込む
+//       stream: FirebaseFirestore.instance.collection('baby').snapshots(),
+//       builder: (context, snapshot) {
+//         if (!snapshot.hasData) return LinearProgressIndicator();
+
+//         return _buildList(context, snapshot.data.docs);
+//       },
+//     );
+//   }
+
+//   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
+//     return ListView(
+//       padding: const EdgeInsets.only(top: 20.0),
+//       children: snapshot.map((data) => _buildListItem(context, data)).toList(),
+//     );
+//   }
+
+//   // 具体的に表示を作成するところ
+//   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
+//     final record = Record.fromSnapshot(data);
+
+//     return Padding(
+//       key: ValueKey(record.name),
+//       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+//       child: Container(
+//           decoration: BoxDecoration(
+//             border: Border.all(color: Colors.grey),
+//             borderRadius: BorderRadius.circular(5.0),
+//           ),
+//           child: ListTile(
+//             title: Text(record.name),
+//             trailing: Text(record.votes.toString()),
+//             // onTap: () => record.reference.update({'votes': record.votes + 1})),
+//             //
+//             // もし同時に二人の人が同じところに投票しても良いようにする
+//             // transactionという方法もある
+//             // https://codelabs.developers.google.com/codelabs/flutter-firebase/index.html?hl=ja#10
+//             onTap: () =>
+//                 record.reference.update({'votes': FieldValue.increment(1)}),
+//           )),
+//     );
+//   }
+// }
 
 // ここから下は最初のドキュメントにあった方
 // https://firebase.google.com/docs/flutter/setup?hl=ja#analytics-enabled
