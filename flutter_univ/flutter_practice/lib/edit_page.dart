@@ -32,7 +32,6 @@ class EditPage extends StatelessWidget {
           ageEditingController.text.isEmpty) {
         throw ('Insert both your name and age');
       } else {
-        // TODO: docの中身をいれる
         print(documentId);
         await users.doc(documentId).update({
           'name': nameEditingController.text.toString(),

@@ -7,7 +7,7 @@ import 'package:flutter_practice/edit_page.dart';
 // import 'package:flutter_practice/tabs_page.dart';
 
 // main関数を以下のように変更したらできた
-// void main() => runApp(MyApp());
+// →ログイン画面から起動してもらう
 Future<void> main() async {
   // runAppを呼び出す前にFlutter Engineの機能を利用したい場合にコール
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,11 +58,20 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_nameController.text.isEmpty || _ageController.text.isEmpty) {
       throw ('Insert both your name and age');
     } else {
-      final DocumentReference id = await users.add({
+      await users.add({
         'name': _nameController.text.toString(),
         'age': _ageController.text.toString(),
         'created_at': FieldValue.serverTimestamp(),
       });
+    }
+  }
+
+  Future<void> _deleteAccount(documentId) async {
+    print(documentId);
+    try {
+      await users.doc(documentId).delete();
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -208,7 +217,6 @@ class _MyHomePageState extends State<MyHomePage> {
               trailing: IconButton(
                 icon: Icon(Icons.edit),
                 onPressed: () async {
-                  // TODO: Go to edit page
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -220,6 +228,71 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 },
               ),
+              onLongPress: () async {
+                await showDialog<void>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('${record.name}を削除しますか？'),
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text(
+                            '削除',
+                            style: TextStyle(
+                              color: Colors.red,
+                            ),
+                          ),
+                          onPressed: () async {
+                            try {
+                              Navigator.of(context).pop();
+                              await _deleteAccount(record.id); // アカウントを登録する関数
+                              showDialog<void>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Done'),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: Text('OK'),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } catch (err) {
+                              showDialog<void>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text(err.toString()),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: Text('OK'),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
+                        TextButton(
+                          child: Text('閉じる'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
