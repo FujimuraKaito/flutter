@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_practice/edit_page.dart';
+import 'package:flutter_signin_button/button_view.dart';
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 Future<void> main() async {
@@ -75,8 +77,8 @@ class _LoginState extends State<Login> {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              RaisedButton(
-                child: Text('Sign in Google'),
+              SignInButton(
+                Buttons.Google,
                 onPressed: () {
                   _handleSignIn()
                       .then((User user) => transitionNextPage(user))
@@ -89,6 +91,7 @@ class _LoginState extends State<Login> {
   }
 }
 
+// ここからがログイン後の画面
 class MyApp extends StatelessWidget {
   final User userData;
   MyApp({this.userData});
@@ -119,10 +122,18 @@ class MyHomePage extends StatefulWidget {
 // Stateを参照することでWidgetの再作成を効率的に行う
 // State<T>は型を指定することで親クラス(MyHomePage)で定義された変数を使用できる
 class _MyHomePageState extends State<MyHomePage> {
+  final _auth = FirebaseAuth.instance;
+
   User userData;
   String name = '';
   String email;
   String photoUrl;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  // この中で状態の保持と更新を行える
+  TextEditingController _nameController;
+  TextEditingController _ageController;
+
   _MyHomePageState(User userData) {
     this.userData = userData;
     this.name = userData.displayName;
@@ -130,13 +141,17 @@ class _MyHomePageState extends State<MyHomePage> {
     this.photoUrl = userData.photoURL;
   }
 
-  // この中で状態の保持と更新を行える
-  TextEditingController _nameController;
-  TextEditingController _ageController;
-
   @override
   void initState() {
     super.initState();
+    _auth.authStateChanges().listen((User user) {
+      if (user == null) {
+        print('User is currently signed out');
+      } else {
+        print('User is now signed in');
+      }
+    });
+
     _nameController = TextEditingController();
     _ageController = TextEditingController();
   }
@@ -166,6 +181,28 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (error) {
       throw error;
     }
+  }
+
+  // ログアウトする関数
+  // TODO: →とりあえず新しい画面を作成
+  Future<void> _handleSignOut() async {
+    await FirebaseAuth.instance.signOut();
+    try {
+      await _googleSignIn.signOut();
+    } catch (e) {
+      print(e);
+    }
+    // Navigator.pop(context);
+    // Navigator.of(context).pop();
+    // Navigator.pushReplacementNamed(context, '/');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        // 2回実行されてしまう
+        builder: (BuildContext context) => FirstPage(),
+        fullscreenDialog: true,
+      ),
+    );
   }
 
   // もちろんここはオーバーライド
@@ -278,8 +315,14 @@ class _MyHomePageState extends State<MyHomePage> {
             color: Colors.red,
           )),
         ),
+        RaisedButton(
+          child: Text('Sign Out Google'),
+          onPressed: () {
+            _handleSignOut().catchError((e) => print(e));
+          },
+        ),
         SizedBox(
-          height: 600, // must
+          height: 580, // must
           child: Container(
             child: ListView(
               itemExtent: 100,
