@@ -63,7 +63,8 @@ class _LoginState extends State<Login> {
   void transitionNextPage(User user) {
     if (user == null) return;
 
-    Navigator.push(context,
+    // 前のログイン画面を破棄して画面遷移
+    Navigator.pushReplacement(context,
         MaterialPageRoute(builder: (context) => MyApp(userData: user)));
   }
 
@@ -92,6 +93,8 @@ class _LoginState extends State<Login> {
 }
 
 // ここからがログイン後の画面
+// TODO: 状態管理を習得
+// →ログインしたユーザーの情報を保存しておく
 class MyApp extends StatelessWidget {
   final User userData;
   MyApp({this.userData});
@@ -184,7 +187,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // ログアウトする関数
-  // TODO: →とりあえず新しい画面を作成
   Future<void> _handleSignOut() async {
     await FirebaseAuth.instance.signOut();
     try {
@@ -195,10 +197,11 @@ class _MyHomePageState extends State<MyHomePage> {
     // Navigator.pop(context);
     // Navigator.of(context).pop();
     // Navigator.pushReplacementNamed(context, '/');
+    // 新しくページを作って遷移する→前のページは削除
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        // 2回実行されてしまう
+        // アロー関数の書き方
         builder: (BuildContext context) => FirstPage(),
         fullscreenDialog: true,
       ),
