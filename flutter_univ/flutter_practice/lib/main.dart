@@ -8,6 +8,7 @@ import 'package:flutter_practice/edit_page.dart';
 import 'package:flutter_signin_button/button_view.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 
 Future<void> main() async {
   // runAppを呼び出す前にFlutter Engineの機能を利用したい場合にコール
@@ -19,9 +20,14 @@ Future<void> main() async {
 class FirstPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Login page',
-      home: Login(),
+    final UserState userState = UserState();
+
+    return ChangeNotifierProvider<UserState>.value(
+      value: userState,
+      child: MaterialApp(
+        title: 'Login page',
+        home: Login(),
+      ),
     );
   }
 }
@@ -70,6 +76,9 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
+    // ユーザー情報を受け取る
+    final UserState userState = Provider.of<UserState>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('ログイン'),
@@ -82,6 +91,7 @@ class _LoginState extends State<Login> {
                 Buttons.Google,
                 onPressed: () {
                   _handleSignIn()
+                      .then((User user) => userState.setUser(user))
                       .then((User user) => transitionNextPage(user))
                       .catchError((e) => print(e));
                 },
@@ -93,9 +103,10 @@ class _LoginState extends State<Login> {
 }
 
 // ここからがログイン後の画面
-// TODO: 状態管理を習得
-// →ログインしたユーザーの情報を保存しておく
 class MyApp extends StatelessWidget {
+  // Providerを使用した状態管理
+  final UserState userState = UserState();
+
   final User userData;
   MyApp({this.userData});
 
@@ -474,6 +485,17 @@ class Record {
 
   @override
   String toString() => "Record<$name:$age>";
+}
+
+class UserState extends ChangeNotifier {
+  User user;
+
+  User setUser(User newUser) {
+    print('Userが登録されました');
+    user = newUser;
+    notifyListeners();
+    return newUser;
+  }
 }
 
 // ドキュメントにあった「子供の名前を決める」

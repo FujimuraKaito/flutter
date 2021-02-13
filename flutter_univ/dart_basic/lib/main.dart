@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter_hooks/flutter_hooks.dart';
+// import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+// StateProviderはstateを変更するだけでその変更が通知される
+// final counterProvider = StateProvider((ref) => 0);
 
 void main() {
+  // runApp(ProviderScope(child: MyApp()));
   runApp(MyApp());
 }
 
+// グローバルに状態の入れ物を定義
+
+// useProviderを使用するWidgetはHookWidgetを継承する
 class MyApp extends StatelessWidget {
+  // final int count = useProvider(counterProvider).state;
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Demo App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -129,6 +140,13 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
+      // floatingActionButton: FloatingActionButton(
+      //   child: Icon(Icons.add),
+      //   onPressed: () {
+      //     context.read(counterProvider).state++;
+      //     print(context.read(counterProvider).state);
+      //   },
+      // ),
     );
   }
 }
