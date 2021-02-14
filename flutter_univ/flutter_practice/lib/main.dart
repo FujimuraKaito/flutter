@@ -22,6 +22,11 @@ class FirstPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final UserState userState = UserState();
 
+    // <T>の中にはProviderで渡す値の型を入れる
+    // いくつもProviderで管理したい場合はMultiProviderがある
+
+    // 主な手法はChangeNotifierProviderとConsumerを使うやつ
+    // その際のbuilderの引数に注意
     return ChangeNotifierProvider<UserState>.value(
       value: userState,
       child: MaterialApp(
