@@ -6,22 +6,41 @@ import '../add_task_screen/add_task_screen.dart';
 import 'task_item.dart';
 
 class TaskListView extends StatelessWidget {
+  // {}で名前付き引数となる→呼び出し時に必須ではない
+  // keyは使いたいウィジェットに最上部に持ってくる
+  // →でないと子要素がマッチしなくなり，毎回新しい要素を生み出してしまう
+  // GrobalKeyは他のウィジェットとのデータの一貫性を保つために使う
+
+  // StatefulWidgetでは描画更新処理でelementをrebuidするかどうかの判定をKeyとクラス名で判断する
+
+  // リストないにおいて同じ型のコレクションを変更する時に使える
   const TaskListView({
+    // Key型のkeyを生成
     Key key,
+    // :をつけてコンストラクタをリダイレクトできる
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Cunsumerの中でTaskViewModelの機能が使える
+    // notifyListenersされた時にこれ以下の要素のUIが変更される
+    // Consumerの第二引数はChangenotifierを継承したクラスを使用する時の名前
+    // TODO: 第3引数についての理解
     return Consumer<TaskViewModel>(builder: (context, taskViewModel, _) {
       if (taskViewModel.tasks.isEmpty) {
-        // リストに何もなかったらからの配列を返す
+        // リストに何もなかったら空の配列からなるウィジェットを返す
         return _emptyView();
       }
+      // 区切りを表示するためのやつ
       return ListView.separated(
-        itemBuilder: (context, index) {
+        itemBuilder: (BuildContext context, int index) {
+          // それぞれの要素
           var task = taskViewModel.tasks[index];
+          // スワイプの機能
           return Dismissible(
+            // それぞれのリストの要素にユニークなキーを発行する
             key: UniqueKey(),
+            // スワイプされた方向によって機能を変える
             onDismissed: (direction) {
               if (direction == DismissDirection.endToStart) {
                 taskViewModel.deleteTask(index);
@@ -29,23 +48,33 @@ class TaskListView extends StatelessWidget {
                 taskViewModel.toggleDone(index, true);
               }
             },
+            // endToStartの時のバックグラウンド
             background: _buildDismissibleBackgroundContainer(false),
+            // startToEndの時のバックグラウンド
             secondaryBackground: _buildDismissibleBackgroundContainer(true),
+            // 他のファイルで作成したクラス→StatelessWidgetを継承
             child: TaskItem(
-                task: task,
-                onTap: () {
-                  Navigator.of(context).push<dynamic>(
-                    MaterialPageRoute<dynamic>(builder: (context) {
+              task: task,
+              onTap: () {
+                Navigator.of(context).push<dynamic>(
+                  // 項目を押したら画面遷移
+                  MaterialPageRoute<dynamic>(
+                    builder: (context) {
+                      // インデックスを取得するためにtaskViewModelを使用
                       var task = taskViewModel.tasks[index];
+                      // 初期値を代入しておく→AddTaskScreenでもtaskViewModelを使用する
                       taskViewModel.nameController.text = task.name;
                       taskViewModel.memoController.text = task.memo;
                       return AddTaskScreen(editTask: task);
-                    }),
-                  );
-                },
-                toggleDone: (value) {
-                  taskViewModel.toggleDone(index, value);
-                }),
+                    },
+                  ),
+                );
+              },
+              // task_itemをみる限りチェックボックスを入れたら実行
+              toggleDone: (value) {
+                taskViewModel.toggleDone(index, value);
+              },
+            ),
           );
         },
         separatorBuilder: (_, __) => Divider(),
@@ -54,6 +83,7 @@ class TaskListView extends StatelessWidget {
     });
   }
 
+  // 削除と完了のコンテナを両立→三項演算子を使用
   Container _buildDismissibleBackgroundContainer(bool isSecond) {
     return Container(
       color: isSecond ? Colors.red : Colors.green,
@@ -83,7 +113,7 @@ class TaskListView extends StatelessWidget {
             height: 16,
           ),
           Text(
-            'Complete',
+            'Complete!',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 32,

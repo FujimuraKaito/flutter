@@ -6,12 +6,15 @@ import '../../view_model/task_view_model.dart';
 
 class AddTaskScreen extends StatelessWidget {
   static String id = 'add_task_screen';
+  // 編集または追加を判断する
   final Task editTask;
   AddTaskScreen({Key key, this.editTask}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // ここもUI変更をするのでConsumerを使用
     return Consumer<TaskViewModel>(
+      // ここではviewModelという名前で使用する
       builder: (context, viewModel, _) {
         return WillPopScope(
           onWillPop: () async {
@@ -20,6 +23,7 @@ class AddTaskScreen extends StatelessWidget {
           },
           child: Scaffold(
             appBar: AppBar(
+              // 編集かどうか
               title: Text(_isEdit() ? 'Save Task' : 'AddTask'),
             ),
             body: ListView(
@@ -31,6 +35,7 @@ class AddTaskScreen extends StatelessWidget {
                   errorText:
                       viewModel.validateName ? viewModel.strValidateName : null,
                   didChanged: (_) {
+                    // 変化するたびに呼び出す
                     viewModel.updateValidateName();
                   },
                 ),
@@ -39,6 +44,7 @@ class AddTaskScreen extends StatelessWidget {
                   title: 'Memo',
                   textEditingController: viewModel.memoController,
                   errorText: null,
+                  // こっちはなくても良いのでviewModel.updateValidateNameは呼び出さない
                 ),
                 _buildAddButton(context),
               ],
@@ -54,6 +60,7 @@ class AddTaskScreen extends StatelessWidget {
   }
 
   void tapAddButton(BuildContext context) {
+    // 重要: とってはこれないのでこのような形でviewModelを取得する
     final viewModel = Provider.of<TaskViewModel>(context, listen: false);
     viewModel.setValidateName(true);
     if (viewModel.validateTaskName()) {
@@ -63,6 +70,7 @@ class AddTaskScreen extends StatelessWidget {
   }
 
   Widget _buildInputField(BuildContext context,
+      // 引数として受け取ったやつをイニシャライズする
       {String title,
       TextEditingController textEditingController,
       String errorText,
@@ -80,9 +88,10 @@ class AddTaskScreen extends StatelessWidget {
             controller: textEditingController,
             decoration: InputDecoration(errorText: errorText),
             onChanged: (value) {
+              // 引数として受け取った関数を使用する
               didChanged(value);
             },
-          )
+          ),
         ],
       ),
     );
@@ -92,6 +101,7 @@ class AddTaskScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: RaisedButton(
+        // 機能は別に実装
         onPressed: () => tapAddButton(context),
         color: Theme.of(context).primaryColor,
         padding: const EdgeInsets.all(20),

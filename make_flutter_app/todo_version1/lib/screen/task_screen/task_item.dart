@@ -4,12 +4,14 @@ import '../../model/task.dart';
 
 // 実際に一つひとつのタスクを表示する部分
 class TaskItem extends StatelessWidget {
+  // この三つは引数的な感じで親から渡ってくる
   final Task task;
   final VoidCallback onTap;
   final Function(bool) toggleDone;
 
   // イニシャライズ
   const TaskItem(
+      // ちゃんとKeyを発行
       {Key key,
       @required this.onTap,
       @required this.task,
@@ -18,7 +20,9 @@ class TaskItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ジェスチャーを登録する
     return GestureDetector(
+      // paddingも含めてタッチに反応する
       behavior: HitTestBehavior.opaque,
       // onTapは引数でGestureDetectorを使って関数にする感じ？
       onTap: onTap,
@@ -38,6 +42,7 @@ class TaskItem extends StatelessWidget {
                         .headline4
                         .copyWith(fontWeight: FontWeight.bold),
                   ),
+                  // タスクの内容があれば表示
                   (task.memo.isEmpty)
                       ? Container()
                       : Column(
@@ -59,7 +64,8 @@ class TaskItem extends StatelessWidget {
             Checkbox(
               value: task.isDone,
               onChanged: (value) {
-                print(value);
+                // ここはひとつの要素なのでindexは取得できない
+                // 引数として受け取ったメソッドを使う
                 toggleDone(value);
               },
               activeColor: Colors.lightGreen,
