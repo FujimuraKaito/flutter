@@ -90,18 +90,19 @@ class _LoginState extends State<Login> {
       ),
       body: Center(
         child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              SignInButton(
-                Buttons.Google,
-                onPressed: () {
-                  _handleSignIn()
-                      .then((User user) => userState.setUser(user))
-                      .then((User user) => transitionNextPage(user))
-                      .catchError((e) => print(e));
-                },
-              ),
-            ]),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SignInButton(
+              Buttons.Google,
+              onPressed: () {
+                _handleSignIn()
+                    .then((User user) => userState.setUser(user))
+                    .then((User user) => transitionNextPage(user))
+                    .catchError((e) => print(e));
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
