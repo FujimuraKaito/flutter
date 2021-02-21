@@ -12,11 +12,8 @@ import 'package:todo_version2/screen/task_screen/task_screen.dart';
 import 'package:todo_version2/screen/task_view_model/task_view_model.dart';
 
 Future<void> main() async {
-  print('Here is first point of main method');
   WidgetsFlutterBinding.ensureInitialized();
-  print('Here is second point of main method');
   await Firebase.initializeApp();
-  print('Here is before runApp');
   runApp(
     ChangeNotifierProvider(
       create: (context) => TaskViewModel(),
@@ -52,7 +49,7 @@ class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.userName, this.photoURL}) : super(key: key);
 
   static String id = 'my_home_page';
-  // グローバルに定義する
+  // グローバルに定義する??
   final String userName;
   final String photoURL;
 
@@ -90,35 +87,46 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void transitionNextPage(User user) {
-    // TODO: ユーザー情報を保存する
     // 前のログイン画面を破棄して画面遷移
-    Navigator.pushReplacement(
-        context,
-        // TODO: 画面遷移先変更
-        MaterialPageRoute(builder: (context) => TaskScreen()));
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => TaskScreen(user: user)));
+  }
+
+  // modelにユーザーの情報を追加する
+  User setUid(User user, TaskViewModel taskViewModel) {
+    taskViewModel.uid = user.uid;
+    taskViewModel.userName = user.displayName;
+    taskViewModel.photoURL = user.photoURL;
+    // firebaseからデータを取得してくる
+    taskViewModel.getFirebaseData();
+    print('データを配列に格納します');
+    return user;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Flutter TODO'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SignInButton(
-              Buttons.Google,
-              onPressed: () {
-                _handleSignIn()
-                    .then((User user) => transitionNextPage(user))
-                    .catchError((e) => print(e));
-              },
-            ),
-          ],
+    return Consumer<TaskViewModel>(builder: (context, taskViewModel, _) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Flutter TODO'),
         ),
-      ),
-    );
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              SignInButton(
+                Buttons.Google,
+                onPressed: () {
+                  _handleSignIn()
+                      .then((User user) => setUid(user, taskViewModel))
+                      .then((User user) => transitionNextPage(user))
+                      .catchError((e) => print(e));
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }

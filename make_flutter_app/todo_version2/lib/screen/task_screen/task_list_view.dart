@@ -1,3 +1,5 @@
+// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_version2/screen/task_view_model/task_view_model.dart';
@@ -17,8 +19,11 @@ class TaskListView extends StatelessWidget {
   const TaskListView({
     // Key型のkeyを生成
     Key key,
+    this.user,
     // :をつけてコンストラクタをリダイレクトできる
   }) : super(key: key);
+
+  final User user;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +40,7 @@ class TaskListView extends StatelessWidget {
       return ListView.separated(
         itemBuilder: (BuildContext context, int index) {
           // それぞれの要素
+          // var task = snapshot[index];
           var task = taskViewModel.tasks[index];
           // スワイプの機能
           return Dismissible(
@@ -43,7 +49,7 @@ class TaskListView extends StatelessWidget {
             // スワイプされた方向によって機能を変える
             onDismissed: (direction) {
               if (direction == DismissDirection.endToStart) {
-                taskViewModel.deleteTask(index);
+                taskViewModel.deleteTask(task, index);
               } else {
                 taskViewModel.toggleDone(index, true);
               }
@@ -65,7 +71,10 @@ class TaskListView extends StatelessWidget {
                       // 初期値を代入しておく→AddTaskScreenでもtaskViewModelを使用する
                       taskViewModel.nameController.text = task.name;
                       taskViewModel.memoController.text = task.memo;
-                      return AddTaskScreen(editTask: task);
+                      return AddTaskScreen(
+                        editTask: task,
+                        user: user,
+                      );
                     },
                   ),
                 );

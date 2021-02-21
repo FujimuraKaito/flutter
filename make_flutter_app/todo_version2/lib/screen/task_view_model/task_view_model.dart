@@ -1,5 +1,8 @@
 import 'dart:collection';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_version2/model/task.dart';
 
@@ -7,6 +10,7 @@ import 'package:todo_version2/model/task.dart';
 class TaskViewModel extends ChangeNotifier {
   // ユーザーデータを保存→グローバル変数で持った方が良い？
   String userName = '';
+  String uid = '';
   String photoURL = '';
 
   // 編集時に初期化値を入れるために使用する
@@ -28,6 +32,7 @@ class TaskViewModel extends ChangeNotifier {
 
   // ここで初めてタスク全体を定義
   List<Task> _tasks = [];
+  // QuerySnapshot<Task> _tasks = [];
 
   // 中身が変化するのでUnmodifiable & getters
   UnmodifiableListView<Task> get tasks {
@@ -69,21 +74,64 @@ class TaskViewModel extends ChangeNotifier {
     }
   }
 
-  void addTask() {
-    final newTask = Task(
-      // name: editingName, // とかではダメ？→同クラスでは使えない？
-      // memo: editingMemo, // とかではダメ？
-      name: nameController.text,
-      memo: memoController.text,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-    // ここも直接アクセスしているのでそうするしかないのかも↑
-    _tasks.add(newTask);
-    clear();
+  Future<void> getFirebaseData() async {
+    try {
+      QuerySnapshot tasks = await FirebaseFirestore.instance
+          .collection(uid)
+          .orderBy('createdAt')
+          .get();
+      // 強引に配列にいれる
+      for (int i = 0; i < tasks.docs.length; i++) {
+        print('Start');
+        _tasks.add(Task(
+          name: tasks.docs[i].data()['title'],
+          memo: tasks.docs[i].data()['detail'],
+          isDone: false,
+          id: tasks.docs[i].id,
+          // TimeStamp型からDate型への変換
+          createdAt: tasks.docs[i].data()['createdAt'].toDate(),
+          updatedAt: tasks.docs[i].data()['updatedAt'].toDate(),
+        ));
+      }
+      notifyListeners();
+    } catch (e) {
+      throw e;
+    }
   }
 
-  void updateTask(Task updateTask) {
+  // firebaseに追加する関数
+  CollectionReference get todos => FirebaseFirestore.instance.collection(uid);
+
+  Future<void> addTask(User user) async {
+    try {
+      DocumentReference doc = await todos.add({
+        'title': nameController.text,
+        'detail': memoController.text,
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+      });
+      // これを保存しないといけない
+      print('追加項目の' + doc.id);
+      final newTask = Task(
+        // name: editingName, // とかではダメ？→同クラスでは使えない？
+        // memo: editingMemo, // とかではダメ？
+        name: nameController.text,
+        memo: memoController.text,
+        id: doc.id,
+        reference: doc,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      _tasks.add(newTask);
+      clear();
+      notifyListeners();
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  // TODO: きちんと動くかどうかの確認→firebaseはアップデートされていない
+  Future<void> updateTask(Task updateTask) async {
     var updateIndex = _tasks.indexWhere((task) {
       // createdAtはfinalなので変更されない→一意に定まるのでIDのように利用している
       return task.createdAt == updateTask.createdAt;
@@ -92,15 +140,36 @@ class TaskViewModel extends ChangeNotifier {
     updateTask.name = nameController.text;
     updateTask.memo = memoController.text;
     updateTask.updatedAt = DateTime.now();
+    print('これからアップデートを実行します');
+    print(updateTask.id);
+    print('これからアップデートを実行します');
+    try {
+      // Updateの処理
+      print('データを更新します' + updateTask.id);
+      await todos.doc(updateTask.id).update({
+        'title': nameController.text,
+        'detail': memoController.text,
+        'updatedAt': DateTime.now(),
+      });
+    } catch (e) {
+      throw e;
+    }
     // 元の配列に戻す
     _tasks[updateIndex] = updateTask;
     clear();
+    notifyListeners();
   }
 
   // indexを引数に取り配列から削除する
-  void deleteTask(int index) {
+  Future<void> deleteTask(Task task, int index) async {
     // 削除後は前詰めになる
     _tasks.removeAt(index);
+    // TODO: firebaseの処理
+    try {
+      await todos.doc(task.id).delete();
+    } catch (error) {
+      throw error;
+    }
     // UI変更時はこれ
     notifyListeners();
   }
@@ -120,5 +189,9 @@ class TaskViewModel extends ChangeNotifier {
     _validateName = false;
     // UIを変更するときはこれ
     notifyListeners();
+  }
+
+  void taskClean() {
+    _tasks = [];
   }
 }

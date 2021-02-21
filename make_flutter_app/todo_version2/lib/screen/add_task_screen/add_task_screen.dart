@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,7 +9,8 @@ class AddTaskScreen extends StatelessWidget {
   static String id = 'add_task_screen';
   // 編集または追加を判断する
   final Task editTask;
-  AddTaskScreen({Key key, this.editTask}) : super(key: key);
+  final User user;
+  AddTaskScreen({Key key, this.editTask, this.user}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +62,12 @@ class AddTaskScreen extends StatelessWidget {
   }
 
   void tapAddButton(BuildContext context) {
-    // 重要: とってはこれないのでこのような形でviewModelを取得する
+    // TODO(重要): とってはこれないのでこのような形でviewModelを取得する
     final viewModel = Provider.of<TaskViewModel>(context, listen: false);
     viewModel.setValidateName(true);
     if (viewModel.validateTaskName()) {
-      _isEdit() ? viewModel.updateTask(editTask) : viewModel.addTask();
+      // TODO: メソッドの中身を変更→ユーザー情報を渡す（uidをdocumentIdにするため）
+      _isEdit() ? viewModel.updateTask(editTask) : viewModel.addTask(user);
       Navigator.of(context).pop();
     }
   }
