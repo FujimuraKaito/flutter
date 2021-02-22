@@ -82,7 +82,6 @@ class TaskViewModel extends ChangeNotifier {
           .get();
       // 強引に配列にいれる
       for (int i = 0; i < tasks.docs.length; i++) {
-        print('Start');
         _tasks.add(Task(
           name: tasks.docs[i].data()['title'],
           memo: tasks.docs[i].data()['detail'],
@@ -107,6 +106,7 @@ class TaskViewModel extends ChangeNotifier {
       DocumentReference doc = await todos.add({
         'title': nameController.text,
         'detail': memoController.text,
+        'isDone': false,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
       });
@@ -140,9 +140,7 @@ class TaskViewModel extends ChangeNotifier {
     updateTask.name = nameController.text;
     updateTask.memo = memoController.text;
     updateTask.updatedAt = DateTime.now();
-    print('これからアップデートを実行します');
     print(updateTask.id);
-    print('これからアップデートを実行します');
     try {
       // Updateの処理
       print('データを更新します' + updateTask.id);
@@ -164,7 +162,6 @@ class TaskViewModel extends ChangeNotifier {
   Future<void> deleteTask(Task task, int index) async {
     // 削除後は前詰めになる
     _tasks.removeAt(index);
-    // TODO: firebaseの処理
     try {
       await todos.doc(task.id).delete();
     } catch (error) {
@@ -175,9 +172,19 @@ class TaskViewModel extends ChangeNotifier {
   }
 
   // indexと真偽値を受け取り変更する
-  void toggleDone(int index, bool isDone) {
+  void toggleDone(int index, bool isDone) async {
     // 要素に直接上書きはしていない
     var task = _tasks[index];
+    // TODO: firebaseの処理
+    // documentIDを取得
+    String docId = task.id;
+    try {
+      await todos.doc(docId).update({
+        'isDone': isDone,
+      });
+    } catch (e) {
+      throw e;
+    }
     task.isDone = isDone;
     _tasks[index] = task;
     notifyListeners();

@@ -103,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return user;
   }
 
+  var _isEnabled = true;
   @override
   Widget build(BuildContext context) {
     return Consumer<TaskViewModel>(builder: (context, taskViewModel, _) {
@@ -117,10 +118,18 @@ class _MyHomePageState extends State<MyHomePage> {
               SignInButton(
                 Buttons.Google,
                 onPressed: () {
-                  _handleSignIn()
-                      .then((User user) => setUid(user, taskViewModel))
-                      .then((User user) => transitionNextPage(user))
-                      .catchError((e) => print(e));
+                  // ボタンを一度しか押せないように改良
+                  if (_isEnabled) {
+                    print(_isEnabled);
+                    print('ボタンが押されました');
+                    _handleSignIn()
+                        .then((User user) => setUid(user, taskViewModel))
+                        .then((User user) => transitionNextPage(user))
+                        .catchError((e) => print(e));
+                  } else {
+                    print('ログインボタン重複');
+                  }
+                  _isEnabled = false;
                 },
               ),
             ],
