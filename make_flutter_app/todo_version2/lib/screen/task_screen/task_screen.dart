@@ -49,7 +49,7 @@ class TaskScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('TODO'),
+        title: Text(user.displayName + "'" + 's TODO'),
         actions: [
           // 右に配置したい
           // ジェスチャーを加える
