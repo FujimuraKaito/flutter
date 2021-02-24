@@ -8,10 +8,13 @@ import 'place_map.dart';
 import 'stub_data.dart';
 
 enum PlaceTrackerViewType {
+  // 地点の見方の種類
+  // emumなのでこの2種類に限定する
   map,
   list,
 }
 
+// 大枠のウィジェット
 class PlaceTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -72,35 +75,51 @@ class _PlaceTrackerHomePage extends StatelessWidget {
   }
 }
 
+// ChangeNotifierを継承したクラス
+// →状態を保存できるモデルみたいな感じ？
 class AppState extends ChangeNotifier {
   AppState({
     this.places = StubData.places,
+    // 初期値はお気に入り？
     this.selectedCategory = PlaceCategory.favorite,
+    // 初期値はマップ？
     this.viewType = PlaceTrackerViewType.map,
   })  : assert(places != null),
         assert(selectedCategory != null);
 
+  // 場所が集まったリスト
   List<Place> places;
+  // favorite,visted,wantToGoの三つをもつenum
   PlaceCategory selectedCategory;
+  // map,listの2つを持つenum
   PlaceTrackerViewType viewType;
 
+  // 変更可能にする
   void setViewType(PlaceTrackerViewType viewType) {
     this.viewType = viewType;
     notifyListeners();
   }
 
+  // 変更可能にする
   void setSelectedCategory(PlaceCategory newCategory) {
+    // TODO: selectedCategoryはなんでthis.ではないのか？？→全体で共通だから？
+    // this.は現在のインスタンスを示す
     selectedCategory = newCategory;
     notifyListeners();
   }
 
+  // 変更可能にする
   void setPlaces(List<Place> newPlaces) {
     places = newPlaces;
     notifyListeners();
   }
 
   @override
+  // 適当な何かのObjectってこと？
+  // この場合はPlace型のObjectが来ることが予想される
+  // TODO→等号(==)の定義をしている
   bool operator ==(Object other) {
+    // thisとotherが同じオブジェクトであればtrueを返す
     if (identical(this, other)) return true;
     return other is AppState &&
         other.places == places &&
@@ -108,6 +127,7 @@ class AppState extends ChangeNotifier {
         other.viewType == viewType;
   }
 
+  // サブクラスがoperatorをオーバーライドする場合はhashCodeメソッドもオーバーライドする必要がある
   @override
   int get hashCode => hashValues(places, selectedCategory, viewType);
 }
