@@ -35,9 +35,11 @@ class PlaceDetailsState extends State<PlaceDetails> {
   GoogleMapController _mapController;
   // 重複を許さない配列＆MarkerはGoogleMapControllerのマーカー機能
   final Set<Marker> _markers = {};
+  // マーカー登録にいるもの
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  //
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,6 +55,7 @@ class PlaceDetailsState extends State<PlaceDetails> {
                 size: 30,
               ),
               onPressed: () {
+                // 親のStatufulWidgetで定義されているのでwidget.---
                 widget.onChanged(_place);
                 Navigator.pop(context);
               },
@@ -71,12 +74,15 @@ class PlaceDetailsState extends State<PlaceDetails> {
 
   @override
   void initState() {
+    // 親の変数
     _place = widget.place;
+    // フォームの初期化代入？
     _nameController.text = _place.name;
     _descriptionController.text = _place.description;
     return super.initState();
   }
 
+  // どこかの地点を押すと詳細のリストに変化する？
   Widget _detailsBody() {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
@@ -84,6 +90,7 @@ class PlaceDetailsState extends State<PlaceDetails> {
         _NameTextField(
           controller: _nameController,
           onChanged: (value) {
+            // 子からvalueを受け取ることができる
             setState(
               () {
                 // 名前だけ変更するからcopyWith？→引数がないものはコピー元を参照
@@ -103,6 +110,7 @@ class PlaceDetailsState extends State<PlaceDetails> {
           },
         ),
         _StarBar(
+          // 初期値を決めておく
           rating: _place.starRating,
           onChanged: (value) {
             setState(
@@ -113,6 +121,7 @@ class PlaceDetailsState extends State<PlaceDetails> {
           },
         ),
         _Map(
+          // クリックした地点を真ん中に持ってくる
           center: _place.latLng,
           mapController: _mapController,
           onMapCreated: _onMapCreated,
@@ -125,6 +134,7 @@ class PlaceDetailsState extends State<PlaceDetails> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+    // 追加する
     setState(() {
       _markers.add(Marker(
         markerId: MarkerId(_place.latLng.toString()),
@@ -136,8 +146,10 @@ class PlaceDetailsState extends State<PlaceDetails> {
 
 class _DescriptionTextField extends StatelessWidget {
   final TextEditingController controller;
+  // ここではStringが変化したら
   final ValueChanged<String> onChanged;
 
+  // コンストラクタ
   const _DescriptionTextField({
     @required this.controller,
     @required this.onChanged,
@@ -147,6 +159,7 @@ class _DescriptionTextField extends StatelessWidget {
         super(key: key);
 
   @override
+  // contextをここで使用することでいろいろやりやすくなる
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
@@ -160,6 +173,7 @@ class _DescriptionTextField extends StatelessWidget {
         autocorrect: true,
         controller: controller,
         onChanged: (value) {
+          // TextFieldに備わっているonChangedの引数に初期化された引数（関数）を渡す
           onChanged(value);
         },
       ),
@@ -168,10 +182,13 @@ class _DescriptionTextField extends StatelessWidget {
 }
 
 class _Map extends StatelessWidget {
+  // 地点の座標を表す
   final LatLng center;
 
   final GoogleMapController mapController;
+  // GoogleMapControllerが変化した時のやつ
   final ArgumentCallback<GoogleMapController> onMapCreated;
+  // 地点の集合？
   final Set<Marker> markers;
 
   const _Map({
@@ -195,6 +212,7 @@ class _Map extends StatelessWidget {
         child: GoogleMap(
           onMapCreated: onMapCreated,
           initialCameraPosition: CameraPosition(
+            // ここで引数に受け取ったところを指定する
             target: center,
             zoom: 16,
           ),
@@ -212,8 +230,14 @@ class _Map extends StatelessWidget {
 class _NameTextField extends StatelessWidget {
   final TextEditingController controller;
 
-  final ValueChanged<String> onChanged;
+  // TODO: 確認→onChagedした時に走る関数
+  // ただなんでこの型なのかがわからない→String型の変数を親の渡す
+  // ValueChangedは子から親にデータを渡すことができる
+  final ValueChanged<String> onChanged; // 名前はonChangedが多い
+
+  // コンストラクタ
   const _NameTextField({
+    // controllerとonChangedは引数としてプロパティとして渡ってくる
     @required this.controller,
     @required this.onChanged,
     Key key,
@@ -233,7 +257,10 @@ class _NameTextField extends StatelessWidget {
         style: const TextStyle(fontSize: 20, color: Colors.black87),
         autocorrect: true,
         controller: controller,
+        // TextFieldはonChangedプロパティを持つのでそれを利用する
+        // 内容が変化したらデータを渡す
         onChanged: (value) {
+          // ValueChangedに渡す
           onChanged(value);
         },
       ),
@@ -241,6 +268,7 @@ class _NameTextField extends StatelessWidget {
   }
 }
 
+// 常に表示されるウィジェット→指定するプロパティがない→引数がない
 class _Reviews extends StatelessWidget {
   const _Reviews({
     Key key,
@@ -253,6 +281,7 @@ class _Reviews extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.fromLTRB(0, 12, 0, 8),
           child: Align(
+            // 左上に合わせる
             alignment: Alignment.topLeft,
             child: Text(
               'Reviews',
@@ -266,7 +295,9 @@ class _Reviews extends StatelessWidget {
           ),
         ),
         Column(
+          // importしているので使用できる
           children: StubData.reviewStrings
+              // 配列の要素を一つずつ取り出し，ウィジェットに渡す
               .map((reviewText) => _buildSingleReview(reviewText))
               .toList(),
         ),
@@ -274,10 +305,12 @@ class _Reviews extends StatelessWidget {
     );
   }
 
+  // 一つずつのレビューを受け取って表示する
   Widget _buildSingleReview(String reviewText) {
     return Column(
       children: [
         Padding(
+          // 余白を引数にとることができる
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
             children: [
@@ -330,11 +363,15 @@ class _Reviews extends StatelessWidget {
   }
 }
 
+// 星を表す部分
 class _StarBar extends StatelessWidget {
+  // 星の最大値は5
   static const int maxStars = 5;
 
+  // ratingは星の数なのでint
   final int rating;
   final ValueChanged<int> onChanged;
+
   const _StarBar({
     @required this.rating,
     @required this.onChanged,
@@ -347,16 +384,22 @@ class _StarBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+      // 第一引数→いくつ生成するか
+      // 第二引数→生成する時の関数(indexを受け取れる)
       children: List.generate(maxStars, (index) {
+        // indexは0から
+        // リストを生成する
         return IconButton(
           icon: const Icon(Icons.star),
           iconSize: 40,
+          // 星の色を表現している
           color: rating > index ? Colors.amber : Colors.grey[400],
           onPressed: () {
+            // 星の評価を増やすことができる
             onChanged(index + 1);
           },
         );
-      }).toList(),
+      }).toList(), // リストを表示させるため？
     );
   }
 }

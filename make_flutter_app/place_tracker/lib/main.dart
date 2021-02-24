@@ -5,6 +5,7 @@ import 'place_tracker_app.dart';
 
 void main() {
   runApp(ChangeNotifierProvider(
+    // 状態を管理している
     create: (context) => AppState(),
     child: PlaceTrackerApp(),
   ));
