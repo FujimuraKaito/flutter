@@ -25,7 +25,7 @@ class TaskListView extends StatelessWidget {
     // Cunsumerの中でTaskViewModelの機能が使える
     // notifyListenersされた時にこれ以下の要素のUIが変更される
     // Consumerの第二引数はChangenotifierを継承したクラスを使用する時の名前
-    // TODO: 第3引数についての理解
+    // TODO: 第3引数についての理解→child
     return Consumer<TaskViewModel>(builder: (context, taskViewModel, _) {
       if (taskViewModel.tasks.isEmpty) {
         // リストに何もなかったら空の配列からなるウィジェットを返す
