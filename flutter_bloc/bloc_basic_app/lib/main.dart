@@ -54,12 +54,12 @@ class MyHomePage extends StatelessWidget {
             ),
             // 実際に値を表示するところ
             // StreamBuilderでBLoCの値を受け取る
+            // Streamの値の変更を検知する
             StreamBuilder(
               initialData: CountData(count: 1, pushCount: 0),
               // blocクラスでstreamに指定したほう
               stream: counterBloc.count,
               builder: (context, snapshot) {
-                print('ストリームが実行');
                 num = snapshot.data.count;
                 return Text(
                   '${snapshot.data.count}(2^${snapshot.data.pushCount})',
@@ -73,7 +73,6 @@ class MyHomePage extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Blocの受け入れ部分(Sink<T>)にaddする
-          print('ボタンが押されましt');
           CountData countData = CountData(count: num, pushCount: 1);
           counterBloc.increment.add(countData);
         },
