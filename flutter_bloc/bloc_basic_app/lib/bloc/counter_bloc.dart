@@ -20,12 +20,18 @@ class CounterBloc {
   int _pushCount = 0;
 
   CounterBloc() {
+    // listenメソッドは新しい値が追加されたタイミングで何か処理をする
     _actionController.stream.listen((countData) {
+      print('リッスンの関数内です');
       _count += countData.count;
       _pushCount += countData.pushCount;
       // ここか実行されることで画面に反映される
+      // addメソッドでStreamに新しい値を送ることができる
       _counterController.sink
           .add(CountData(count: _count, pushCount: _pushCount));
+
+      // addErrorメソッドを持つ
+      // _counterController.sink.addError(CountData(count: 0, pushCount: 0));
     });
   }
 

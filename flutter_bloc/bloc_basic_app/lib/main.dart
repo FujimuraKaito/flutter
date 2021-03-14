@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         // Widgetとblocの生存期間を一緒にする→Widgetがなくなるときはblocもなくなる
         dispose: (context, bloc) => bloc.dispose(),
         child: MyHomePage(
-          title: 'Flutter Demo Home Page',
+          title: 'BLoC Demo',
         ),
       ),
     );
@@ -59,6 +59,7 @@ class MyHomePage extends StatelessWidget {
               // blocクラスでstreamに指定したほう
               stream: counterBloc.count,
               builder: (context, snapshot) {
+                print('ストリームが実行');
                 num = snapshot.data.count;
                 return Text(
                   '${snapshot.data.count}(2^${snapshot.data.pushCount})',
@@ -72,6 +73,7 @@ class MyHomePage extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Blocの受け入れ部分(Sink<T>)にaddする
+          print('ボタンが押されましt');
           CountData countData = CountData(count: num, pushCount: 1);
           counterBloc.increment.add(countData);
         },
